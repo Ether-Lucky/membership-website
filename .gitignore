@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Environment — NEVER commit secrets
+.env.local
+.env.*.local
+
+# Native builds
+android/
+ios/
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# EAS
+eas.json
