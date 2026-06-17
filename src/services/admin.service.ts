@@ -9,9 +9,9 @@ export const adminService = {
       .from('members')
       .select(`
         *,
-        profile:profiles!inner(*)
+        profile:profiles!members_profile_id_fkey(*)
       `)
-      .eq('profiles.status', 'pending')
+      .eq('profile.status', 'pending')
       .order('created_at', { ascending: true });
 
     if (error) throw error;

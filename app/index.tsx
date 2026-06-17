@@ -10,9 +10,13 @@ export default function RootIndex() {
 
   useEffect(() => {
     if (loading) return;
+  
     if (!profile) {
       router.replace('/(auth)/login');
-    } else if (profile.role === 'admin') {
+      return;
+    }
+  
+    if (profile.role === 'admin') {
       router.replace('/(admin)/dashboard');
     } else if (profile.status === 'approved') {
       router.replace('/(member)/dashboard');
