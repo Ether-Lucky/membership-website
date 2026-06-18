@@ -1,5 +1,5 @@
 // app/(auth)/signup.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -156,45 +156,53 @@ function ValidationModal({ errors, visible, onClose }: {
 //      We inject a <style> tag to override the browser's default date input
 //      appearance so it looks like our custom inputs.
 // Mobile: plain numeric text input.
+const DATE_PICKER_STYLE_ID = 'date-picker-style';
+
 function BirthdatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const today = new Date().toISOString().split('T')[0];
 
   if (Platform.OS === 'web') {
+    // Inject style tag once into document head instead of on every render
+    useEffect(() => {
+      if (document.getElementById(DATE_PICKER_STYLE_ID)) return;
+      const style = document.createElement('style');
+      style.id = DATE_PICKER_STYLE_ID;
+      style.textContent = `
+        .date-picker-input {
+          width: 100%;
+          border: 1.5px solid #E2E8F0;
+          border-radius: 10px;
+          padding: 12px 14px;
+          font-size: 15px;
+          color: #0F172A;
+          background-color: #ffffff;
+          outline: none;
+          font-family: inherit;
+          cursor: pointer;
+          box-sizing: border-box;
+          appearance: none;
+          -webkit-appearance: none;
+          display: block;
+        }
+        .date-picker-input::-webkit-calendar-picker-indicator {
+          cursor: pointer;
+          font-size: 18px;
+          opacity: 0.6;
+          margin-left: auto;
+        }
+        .date-picker-input:focus {
+          border-color: #C9A84C;
+          box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+        }
+        .date-picker-input:hover {
+          border-color: #CBD5E1;
+        }
+      `;
+      document.head.appendChild(style);
+    }, []);
+
     return (
       <View style={styles.dateWebWrap}>
-        {/* Inject CSS to style the date input like our other inputs */}
-        {/* @ts-ignore */}
-        <style>{`
-          .date-picker-input {
-            width: 100%;
-            border: 1.5px solid #E2E8F0;
-            border-radius: 10px;
-            padding: 12px 14px;
-            font-size: 15px;
-            color: #0F172A;
-            background-color: #ffffff;
-            outline: none;
-            font-family: inherit;
-            cursor: pointer;
-            box-sizing: border-box;
-            appearance: none;
-            -webkit-appearance: none;
-            display: block;
-          }
-          .date-picker-input::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            font-size: 18px;
-            opacity: 0.6;
-            margin-left: auto;
-          }
-          .date-picker-input:focus {
-            border-color: #C9A84C;
-            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
-          }
-          .date-picker-input:hover {
-            border-color: #CBD5E1;
-          }
-        `}</style>
         {/* @ts-ignore */}
         <input
           className="date-picker-input"
@@ -254,16 +262,29 @@ function PhotoUploader({ photoUri, onPhoto }: { photoUri: string | null; onPhoto
   const fileInputRef = useRef<any>(null);
 
   if (Platform.OS === 'web') {
+    function getExtFromFile(file: File): string {
+      const mimeMap: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+      return mimeMap[file.type] || 'jpg';
+    }
     function handleDragOver(e: any) { e.preventDefault(); setDragging(true); }
     function handleDragLeave() { setDragging(false); }
     function handleDrop(e: any) {
       e.preventDefault(); setDragging(false);
       const file = e.dataTransfer?.files?.[0];
-      if (file && file.type.startsWith('image/')) onPhoto(URL.createObjectURL(file));
+      if (file && file.type.startsWith('image/')) {
+        const ext = getExtFromFile(file);
+        const blobUrl = URL.createObjectURL(file);
+        // Append extension so uploadAvatar can detect file type
+        onPhoto(`${blobUrl}#.${ext}`);
+      }
     }
     function handleFileChange(e: any) {
       const file = e.target?.files?.[0];
-      if (file && file.type.startsWith('image/')) onPhoto(URL.createObjectURL(file));
+      if (file && file.type.startsWith('image/')) {
+        const ext = getExtFromFile(file);
+        const blobUrl = URL.createObjectURL(file);
+        onPhoto(`${blobUrl}#.${ext}`);
+      }
     }
 
     return (

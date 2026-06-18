@@ -7,15 +7,19 @@ export const storageService = {
    * Returns the storage path (not a signed URL).
    */
   async uploadAvatar(userId: string, localUri: string): Promise<string> {
-    const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    // Support blob URLs with fragment extension: blob:...#.jpg
+    const hashExt = localUri.includes('#.') ? localUri.split('#.').pop()?.toLowerCase() : null;
+    const ext = hashExt || localUri.split('.').pop()?.split('?')[0]?.toLowerCase() || 'jpg';
     const allowed = ['jpg', 'jpeg', 'png', 'webp'];
     if (!allowed.includes(ext)) {
       throw new Error('Invalid file type. Please upload a JPG, PNG, or WebP image.');
     }
+    // Strip fragment before fetching
+    const fetchUri = localUri.split('#')[0];
 
     const filePath = `public/${userId}/avatar.${ext}`;
 
-    const response = await fetch(localUri);
+    const response = await fetch(fetchUri);
     const blob = await response.blob();
 
     if (blob.size > 5 * 1024 * 1024) {
